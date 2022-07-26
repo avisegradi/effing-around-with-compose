@@ -26,7 +26,16 @@ class MainActivity : ComponentActivity() {
             val navController = rememberNavController()
             NavHost(navController = navController, startDestination = "main") {
                 composable("main") { MyApplication5Theme { ArtSpace(navController) } }
-                composable("secondary") { MyApplication5Theme { Oof(navController) } }
+                composable("secondary") {
+                    MyApplication5Theme {
+                        Oof(
+                            navController,
+                            steps =  (1..50).map {
+                                Step("${it.toString()} Oooof")
+                            }
+                        )
+                    }
+                }
             }
         }
     }

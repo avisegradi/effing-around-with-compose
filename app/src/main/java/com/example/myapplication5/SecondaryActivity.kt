@@ -1,31 +1,31 @@
 package com.example.myapplication5
 
-import android.os.Bundle
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material.icons.materialIcon
+import androidx.compose.material.icons.twotone.ArrowBack
+import androidx.compose.material.icons.twotone.Menu
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.sp
-import androidx.navigation.NavDirections
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.example.myapplication5.ui.theme.MyApplication5Theme
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
+val IconSet = Icons.TwoTone
+
 @Composable
-fun Oof(navController: NavHostController) {
+fun Oof(navController: NavHostController, steps: List<Step>) {
     val scope = rememberCoroutineScope()
     val scaffoldState = rememberScaffoldState()
+    val scrollState = rememberScrollState()
 
     Surface(
         modifier = Modifier.fillMaxSize(),
@@ -44,15 +44,16 @@ fun Oof(navController: NavHostController) {
 
                 ) {
                 Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
+                    horizontalAlignment = Alignment.Start,
                     verticalArrangement = Arrangement.Center,
+                    modifier = Modifier.verticalScroll(state = scrollState)
                 ) {
-
-
-                    Text(
-                        text = "Oooof",
-                        fontSize = 64.sp,
-                    )
+                    steps.forEach {
+                        Text(
+                            text = it.title,
+                            fontSize = 64.sp,
+                        )
+                    }
                 }
             }
         }
@@ -65,7 +66,7 @@ private fun BottomNavigation(navController: NavHostController) {
         BottomNavigationItem(
             selected = true,
             onClick = { navController.popBackStack() },
-            icon = { Icon(Icons.Filled.ArrowBack, "Back") }
+            icon = { Icon(IconSet.ArrowBack, "Back") }
         )
     }
 }
@@ -73,7 +74,7 @@ private fun BottomNavigation(navController: NavHostController) {
 @Composable
 fun DrawerContent(scope: CoroutineScope, scaffoldState: ScaffoldState) {
     Button(onClick = { scope.launch { scaffoldState.drawerState.close() } }) {
-        Icon(Icons.Filled.ArrowBack, "Close drawer")
+        Icon(IconSet.ArrowBack, "Close drawer")
     }
 }
 
@@ -91,7 +92,7 @@ private fun TopBar(
                     }
                 }
             ) {
-                Icon(Icons.Filled.Menu, "Open drawer")
+                Icon(IconSet.Menu, "Open drawer")
             }
         }
     }
@@ -102,6 +103,11 @@ private fun TopBar(
 fun Default2Preview() {
     val navController = rememberNavController()
     MyApplication5Theme {
-        Oof(navController)
+        Oof(
+            navController,
+            steps =  (1..50).map {
+                Step("${it.toString()} Oooof")
+            }
+        )
     }
 }
