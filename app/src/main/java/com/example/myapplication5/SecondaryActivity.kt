@@ -1,11 +1,14 @@
 package com.example.myapplication5
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.twotone.ArrowBack
+import androidx.compose.material.icons.twotone.Home
 import androidx.compose.material.icons.twotone.Menu
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
@@ -26,6 +29,7 @@ fun Oof(navController: NavHostController, steps: List<Step>) {
     val scope = rememberCoroutineScope()
     val scaffoldState = rememberScaffoldState()
     val scrollState = rememberScrollState()
+    val lazyListState = rememberLazyListState()
 
     Surface(
         modifier = Modifier.fillMaxSize(),
@@ -34,7 +38,7 @@ fun Oof(navController: NavHostController, steps: List<Step>) {
         Scaffold(
             topBar = { TopBar(scope, scaffoldState) },
             drawerContent = { DrawerContent(scope, scaffoldState) },
-            bottomBar = { BottomNavigation(navController) },
+            bottomBar = { BottomNavigation(navController, scope, lazyListState) },
             scaffoldState = scaffoldState,
         ) {
             Surface(
@@ -43,16 +47,17 @@ fun Oof(navController: NavHostController, steps: List<Step>) {
                     .fillMaxSize(),
 
                 ) {
-                Column(
+                LazyColumn(
                     horizontalAlignment = Alignment.Start,
-                    verticalArrangement = Arrangement.Center,
-                    modifier = Modifier.verticalScroll(state = scrollState)
+                    state = lazyListState,
                 ) {
                     steps.forEach {
-                        Text(
-                            text = it.title,
-                            fontSize = 64.sp,
-                        )
+                        item {
+                            Text(
+                                text = it.title,
+                                fontSize = 64.sp,
+                            )
+                        }
                     }
                 }
             }
@@ -61,12 +66,25 @@ fun Oof(navController: NavHostController, steps: List<Step>) {
 }
 
 @Composable
-private fun BottomNavigation(navController: NavHostController) {
+private fun BottomNavigation(
+    navController: NavHostController,
+    scope: CoroutineScope,
+    lazyListState: LazyListState,
+) {
     BottomNavigation {
         BottomNavigationItem(
             selected = true,
             onClick = { navController.popBackStack() },
             icon = { Icon(IconSet.ArrowBack, "Back") }
+        )
+        BottomNavigationItem(
+            selected = false,
+            onClick = {
+                scope.launch {
+                    lazyListState.animateScrollToItem(25, 0)
+                }
+            },
+            icon = { Icon(IconSet.Home, "GO HOME") }
         )
     }
 }
@@ -105,7 +123,7 @@ fun Default2Preview() {
     MyApplication5Theme {
         Oof(
             navController,
-            steps =  (1..50).map {
+            steps = (1..50).map {
                 Step("${it.toString()} Oooof")
             }
         )
