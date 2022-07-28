@@ -16,6 +16,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.myapplication5.ui.theme.MyApplication5Theme
+import com.example.myapplication5.ui.theme.Theme
 
 
 class MainActivity : ComponentActivity() {
@@ -30,7 +31,7 @@ class MainActivity : ComponentActivity() {
                     MyApplication5Theme {
                         Oof(
                             navController,
-                            steps =  (1..50).map {
+                            steps = (1..50).map {
                                 Step("${it.toString()} Oooof")
                             }
                         )
@@ -117,7 +118,7 @@ fun ArtSpace(navController: NavHostController) {
 @Composable
 fun DefaultPreview() {
     val navController = rememberNavController()
-    MyApplication5Theme {
+    MyApplication5Theme(darkTheme = true) {
         ArtSpace(navController)
     }
 }

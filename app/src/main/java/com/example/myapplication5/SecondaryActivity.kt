@@ -1,11 +1,13 @@
 package com.example.myapplication5
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.*
+import androidx.compose.material.TextFieldDefaults.indicatorLine
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.twotone.ArrowBack
 import androidx.compose.material.icons.twotone.Home
@@ -14,7 +16,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.blur
+import androidx.compose.ui.graphics.AndroidPaint
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
@@ -28,7 +35,6 @@ val IconSet = Icons.TwoTone
 fun Oof(navController: NavHostController, steps: List<Step>) {
     val scope = rememberCoroutineScope()
     val scaffoldState = rememberScaffoldState()
-    val scrollState = rememberScrollState()
     val lazyListState = rememberLazyListState()
 
     Surface(
@@ -45,8 +51,7 @@ fun Oof(navController: NavHostController, steps: List<Step>) {
                 modifier = Modifier
                     .padding(it)
                     .fillMaxSize(),
-
-                ) {
+            ) {
                 LazyColumn(
                     horizontalAlignment = Alignment.Start,
                     state = lazyListState,
@@ -55,7 +60,9 @@ fun Oof(navController: NavHostController, steps: List<Step>) {
                         item {
                             Text(
                                 text = it.title,
-                                fontSize = 64.sp,
+                                overflow = TextOverflow.Ellipsis,
+                                softWrap = false,
+                                style = MaterialTheme.typography.h5,
                             )
                         }
                     }
@@ -64,6 +71,9 @@ fun Oof(navController: NavHostController, steps: List<Step>) {
         }
     }
 }
+
+val String.hello: String
+    get() = "«${this}» Ooøof hello"
 
 @Composable
 private fun BottomNavigation(
@@ -102,7 +112,9 @@ private fun TopBar(
     scaffoldState: ScaffoldState,
 ) {
     TopAppBar() {
-        Row {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+        ) {
             Button(
                 onClick = {
                     scope.launch {
@@ -112,6 +124,11 @@ private fun TopBar(
             ) {
                 Icon(IconSet.Menu, "Open drawer")
             }
+            Spacer(modifier = Modifier.weight(1f))
+            Image(
+                painterResource(R.mipmap.ic_launcher),
+                contentDescription = null,
+            )
         }
     }
 }
@@ -120,11 +137,13 @@ private fun TopBar(
 @Composable
 fun Default2Preview() {
     val navController = rememberNavController()
+
+    val a = (1..100).filter { it % 2 == 0 }
     MyApplication5Theme {
         Oof(
             navController,
-            steps = (1..50).map {
-                Step("${it.toString()} Oooof")
+            steps = a.map {
+                Step(it.toString().hello)
             }
         )
     }
