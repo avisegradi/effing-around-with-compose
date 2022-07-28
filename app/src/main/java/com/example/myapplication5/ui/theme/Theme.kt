@@ -3,11 +3,9 @@ package com.example.myapplication5.ui.theme
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material.Colors
 import androidx.compose.material.MaterialTheme
-import androidx.compose.material.MaterialTheme.colors
 import androidx.compose.material.darkColors
 import androidx.compose.material.lightColors
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.input.key.Key.Companion.G
 
 enum class Theme {
     Purple,
@@ -26,20 +24,20 @@ val palettes = mapOf(
     ),
     Theme.Green to Palette(
         darkColors(
+            primary = White,
+            surface = Cyan700,
+            background = Cyan900,
+            secondary = Grey900,
+            onSurface = Grey100,
+            onPrimary = Grey500,
+        ),
+        lightColors(
             primary = Grey50,
             surface = Green50,
             background = Green100,
             secondary = Grey700,
             onSurface = Grey900,
             onPrimary = Grey900,
-        ),
-        lightColors(
-            primary = White,
-            surface = Cyan700,
-            background = Cyan900,
-            secondary = Grey900,
-            onSurface = Grey100,
-            onPrimary = Grey100,
         )
     )
 )

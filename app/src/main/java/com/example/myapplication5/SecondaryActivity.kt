@@ -1,14 +1,17 @@
 package com.example.myapplication5
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
-import androidx.compose.material.TextFieldDefaults.indicatorLine
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.twotone.ArrowBack
 import androidx.compose.material.icons.twotone.Home
 import androidx.compose.material.icons.twotone.Menu
@@ -16,20 +19,19 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.blur
-import androidx.compose.ui.graphics.AndroidPaint
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.example.myapplication5.ui.theme.MyApplication5Theme
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
-val IconSet = Icons.TwoTone
+val IconSet = Icons.Filled
 
 @Composable
 fun Oof(navController: NavHostController, steps: List<Step>) {
@@ -55,15 +57,11 @@ fun Oof(navController: NavHostController, steps: List<Step>) {
                 LazyColumn(
                     horizontalAlignment = Alignment.Start,
                     state = lazyListState,
+                    modifier = Modifier.background(MaterialTheme.colors.background)
                 ) {
                     steps.forEach {
                         item {
-                            Text(
-                                text = it.title,
-                                overflow = TextOverflow.Ellipsis,
-                                softWrap = false,
-                                style = MaterialTheme.typography.h5,
-                            )
+                            StepItem(it)
                         }
                     }
                 }
@@ -72,8 +70,38 @@ fun Oof(navController: NavHostController, steps: List<Step>) {
     }
 }
 
-val String.hello: String
-    get() = "«${this}» Ooøof hello"
+@Composable
+private fun StepItem(step: Step) {
+    Card(
+        modifier = Modifier
+            .padding(horizontal = 10.dp, vertical = 4.dp),
+        elevation = 4.dp,
+        shape = RoundedCornerShape(12)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(5.dp)
+                .background(MaterialTheme.colors.surface),
+        ) {
+            Text(
+                text = step.title,
+                overflow = TextOverflow.Ellipsis,
+                softWrap = false,
+                style = MaterialTheme.typography.h2,
+                modifier = Modifier.padding(5.dp)
+            )
+            Text(
+                text = step.description,
+                style = MaterialTheme.typography.body1,
+                textAlign = TextAlign.End,
+                modifier = Modifier
+                    .padding(10.dp)
+                    .fillMaxWidth(),
+            )
+        }
+    }
+}
 
 @Composable
 private fun BottomNavigation(
@@ -113,7 +141,8 @@ private fun TopBar(
 ) {
     TopAppBar() {
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth(),
         ) {
             Button(
                 onClick = {
@@ -133,18 +162,29 @@ private fun TopBar(
     }
 }
 
-@Preview(showBackground = true)
 @Composable
-fun Default2Preview() {
+fun MyPreview(dark: Boolean) {
     val navController = rememberNavController()
 
     val a = (1..100).filter { it % 2 == 0 }
-    MyApplication5Theme {
+    MyApplication5Theme(darkTheme = dark) {
         Oof(
             navController,
             steps = a.map {
-                Step(it.toString().hello)
+                Step(it.toString())
             }
         )
     }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun Default2Preview() {
+    MyPreview(dark = false)
+}
+
+@Preview(showBackground = true)
+@Composable
+fun Default3Preview() {
+    MyPreview(dark = true)
 }
