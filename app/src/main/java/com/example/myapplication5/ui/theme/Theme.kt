@@ -24,12 +24,13 @@ val palettes = mapOf(
     ),
     Theme.Green to Palette(
         darkColors(
-            primary = White,
+            primary = Grey900,
             surface = Cyan700,
             background = Cyan900,
             secondary = Grey900,
             onSurface = Grey100,
-            onPrimary = Grey500,
+            onPrimary = White,
+            onSecondary = White,
         ),
         lightColors(
             primary = Grey50,

@@ -142,7 +142,9 @@ private fun TopBar(
     TopAppBar() {
         Row(
             modifier = Modifier
-                .fillMaxWidth(),
+                .fillMaxWidth()
+                .background(MaterialTheme.colors.primary),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             Button(
                 onClick = {
@@ -153,6 +155,11 @@ private fun TopBar(
             ) {
                 Icon(IconSet.Menu, "Open drawer")
             }
+            Spacer(modifier = Modifier.weight(1f))
+            Text(
+                text = "Oof",
+                style = MaterialTheme.typography.h1
+            )
             Spacer(modifier = Modifier.weight(1f))
             Image(
                 painterResource(R.mipmap.ic_launcher),
