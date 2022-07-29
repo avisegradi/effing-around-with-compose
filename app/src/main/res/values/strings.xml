@@ -2,4 +2,5 @@
     <string name="app_name">My Application 5</string>
     <string name="prev_art_piece">Previous</string>
     <string name="next_art_piece">Next</string>
+    <string name="expand_button_description">Expand details</string>
 </resources>

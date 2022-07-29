@@ -9,18 +9,12 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material.icons.twotone.ArrowBack
-import androidx.compose.material.icons.twotone.Home
-import androidx.compose.material.icons.twotone.Menu
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.material.icons.filled.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
@@ -30,8 +24,6 @@ import androidx.navigation.compose.rememberNavController
 import com.example.myapplication5.ui.theme.MyApplication5Theme
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
-
-val IconSet = Icons.Filled
 
 @Composable
 fun Oof(navController: NavHostController, steps: List<Step>) {
@@ -71,7 +63,34 @@ fun Oof(navController: NavHostController, steps: List<Step>) {
 }
 
 @Composable
+private fun DetailsButton(
+    expanded: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    IconButton(
+        onClick = onClick,
+        modifier = modifier,
+    ) {
+        Icon(
+            imageVector = if (expanded) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore,
+            tint = MaterialTheme.colors.secondary,
+            contentDescription = stringResource(R.string.expand_button_description),
+        )
+    }
+}
+
+@Composable
+private fun StepDetails(step: Step) {
+    Column() {
+        Text(text = step.detailsPart1, style = MaterialTheme.typography.h3)
+        Text(text = step.detailsPart2, style = MaterialTheme.typography.body1)
+    }
+}
+
+@Composable
 private fun StepItem(step: Step) {
+    var expanded by remember { mutableStateOf(false) }
     Card(
         modifier = Modifier
             .padding(horizontal = 10.dp, vertical = 4.dp),
@@ -84,13 +103,17 @@ private fun StepItem(step: Step) {
                 .padding(5.dp)
                 .background(MaterialTheme.colors.surface),
         ) {
-            Text(
-                text = step.title,
-                overflow = TextOverflow.Ellipsis,
-                softWrap = false,
-                style = MaterialTheme.typography.h2,
-                modifier = Modifier.padding(5.dp)
-            )
+            Row() {
+                Text(
+                    text = step.title,
+                    overflow = TextOverflow.Ellipsis,
+                    softWrap = false,
+                    style = MaterialTheme.typography.h2,
+                    modifier = Modifier.padding(5.dp)
+                )
+                Spacer(modifier = Modifier.weight(1f))
+                DetailsButton(expanded = expanded, onClick = { expanded = !expanded })
+            }
             Text(
                 text = step.description,
                 style = MaterialTheme.typography.body1,
@@ -99,6 +122,7 @@ private fun StepItem(step: Step) {
                     .padding(10.dp)
                     .fillMaxWidth(),
             )
+            StepDetails(step)
         }
     }
 }
@@ -113,7 +137,7 @@ private fun BottomNavigation(
         BottomNavigationItem(
             selected = true,
             onClick = { navController.popBackStack() },
-            icon = { Icon(IconSet.ArrowBack, "Back") }
+            icon = { Icon(Icons.Filled.ArrowBack, "Back") }
         )
         BottomNavigationItem(
             selected = false,
@@ -122,7 +146,7 @@ private fun BottomNavigation(
                     lazyListState.animateScrollToItem(25, 0)
                 }
             },
-            icon = { Icon(IconSet.Home, "GO HOME") }
+            icon = { Icon(Icons.Filled.Home, "GO HOME") }
         )
     }
 }
@@ -130,7 +154,7 @@ private fun BottomNavigation(
 @Composable
 fun DrawerContent(scope: CoroutineScope, scaffoldState: ScaffoldState) {
     Button(onClick = { scope.launch { scaffoldState.drawerState.close() } }) {
-        Icon(IconSet.ArrowBack, "Close drawer")
+        Icon(Icons.Filled.ArrowBack, "Close drawer")
     }
 }
 
@@ -153,7 +177,7 @@ private fun TopBar(
                     }
                 }
             ) {
-                Icon(IconSet.Menu, "Open drawer")
+                Icon(Icons.Filled.Menu, "Open drawer")
             }
             Spacer(modifier = Modifier.weight(1f))
             Text(
