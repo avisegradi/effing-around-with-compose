@@ -1,5 +1,9 @@
 package com.example.myapplication5
 
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -81,8 +85,8 @@ private fun DetailsButton(
 }
 
 @Composable
-private fun StepDetails(step: Step) {
-    Column() {
+private fun StepDetails(step: Step, modifier: Modifier = Modifier) {
+    Column(modifier = modifier) {
         Text(text = step.detailsPart1, style = MaterialTheme.typography.h3)
         Text(text = step.detailsPart2, style = MaterialTheme.typography.body1)
     }
@@ -91,17 +95,27 @@ private fun StepDetails(step: Step) {
 @Composable
 private fun StepItem(step: Step) {
     var expanded by remember { mutableStateOf(false) }
+    val cardBackGroundColor by animateColorAsState(
+        targetValue = if (expanded) MaterialTheme.colors.primarySurface else MaterialTheme.colors.surface,
+        animationSpec = tween()
+    )
     Card(
         modifier = Modifier
-            .padding(horizontal = 10.dp, vertical = 4.dp),
-        elevation = 4.dp,
-        shape = RoundedCornerShape(12)
+            .padding(horizontal = 10.dp, vertical = 4.dp)
+            .animateContentSize(
+                animationSpec = androidx.compose.animation.core.spring(
+                    stiffness = 60f,
+                    dampingRatio = 0.7f,
+                )
+            ),
+        elevation = 5.dp,
+        shape = RoundedCornerShape(12),
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(5.dp)
-                .background(MaterialTheme.colors.surface),
+                .background(cardBackGroundColor),
         ) {
             Row() {
                 Text(
@@ -122,7 +136,12 @@ private fun StepItem(step: Step) {
                     .padding(10.dp)
                     .fillMaxWidth(),
             )
-            StepDetails(step)
+            if (expanded) {
+                StepDetails(
+                    step,
+                    modifier = Modifier.padding(10.dp)
+                )
+            }
         }
     }
 }
