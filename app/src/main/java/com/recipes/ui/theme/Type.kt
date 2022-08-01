@@ -1,4 +1,4 @@
-package com.example.myapplication5.ui.theme
+package com.recipes.ui.theme
 
 import androidx.compose.material.Typography
 import androidx.compose.ui.text.TextStyle
@@ -6,7 +6,8 @@ import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
-import com.example.myapplication5.R
+import com.recipes.R
+
 
 val AbrilFatface = FontFamily(
     Font(R.font.abril_fatface_regular)

@@ -1,10 +1,9 @@
-package com.example.myapplication5
+package com.recipes
 
-import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.junit4.createComposeRule
-import androidx.compose.ui.test.onNodeWithText
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.example.myapplication5.ui.theme.MyApplication5Theme
+import com.recipes.ui.theme.RecipesTheme
+import com.recipes.MainActivity
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -23,7 +22,7 @@ class ExampleInstrumentedTest {
     @Test
     fun useAppContext() {
         composeTestRule.setContent {
-            MyApplication5Theme {
+            RecipesTheme {
                 MainActivity()
             }
         }

@@ -1,4 +1,4 @@
-package com.example.myapplication5.ui.theme
+package com.recipes.ui.theme
 
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material.Colors
@@ -31,6 +31,7 @@ val palettes = mapOf(
             onSurface = Grey100,
             onPrimary = White,
             onSecondary = White,
+            onBackground = Green100,
         ),
         lightColors(
             primary = Grey50,
@@ -45,7 +46,7 @@ val palettes = mapOf(
 
 
 @Composable
-fun MyApplication5Theme(
+fun RecipesTheme(
     theme: Theme = Theme.Green,
     darkTheme: Boolean = isSystemInDarkTheme(),
     content: @Composable () -> Unit,
