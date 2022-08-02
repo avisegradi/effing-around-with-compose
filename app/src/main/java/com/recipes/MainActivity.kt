@@ -3,11 +3,14 @@ package com.recipes
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
@@ -17,12 +20,13 @@ import androidx.compose.material.icons.filled.Menu
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.recipes.model.Recipe
+import com.recipes.model.Task
 import com.recipes.ui.theme.RecipesTheme
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -57,6 +61,42 @@ private fun DrawerContent(
             )
             Divider(thickness = 2.dp, color = MaterialTheme.colors.onBackground)
             RecipeList(recipes, onRecipeClick)
+        }
+    }
+}
+
+@Composable
+private fun RecipeList(
+    recipes: List<Recipe>,
+    onItemClick: (recipe: Recipe) -> Unit,
+) {
+    LazyColumn(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Top,
+    ) {
+        recipes.map {
+            item { RecipeItem(it, onItemClick) }
+        }
+    }
+}
+
+@Composable
+private fun RecipeItem(
+    recipe: Recipe,
+    onClick: (it: Recipe) -> Unit,
+) {
+    Card(
+        elevation = 5.dp,
+        modifier = Modifier
+            .padding(5.dp)
+            .fillMaxWidth()
+    ) {
+        Button(
+            modifier = Modifier
+                .padding(10.dp),
+            onClick = { onClick(recipe) }
+        ) {
+            Text(text = recipe.title, style = MaterialTheme.typography.body1)
         }
     }
 }
@@ -122,7 +162,7 @@ private fun BottomNavigation(
 
 
 @Composable
-fun RecipesUI(recipes: List<Recipe>) {
+fun RecipesUI(recipes: List<Recipe>, startingRecipe: Recipe? = null) {
     Surface(
         modifier = Modifier.fillMaxSize(),
         color = MaterialTheme.colors.background,
@@ -130,12 +170,13 @@ fun RecipesUI(recipes: List<Recipe>) {
         val scope = rememberCoroutineScope()
         val scaffoldState = rememberScaffoldState()
         val lazyListState = rememberLazyListState()
-        var recipe: Recipe? by remember { mutableStateOf(null) }
+        var recipe: Recipe? by remember { mutableStateOf(startingRecipe) }
+        val uiRecipes by remember { mutableStateOf(recipes) }
 
         Scaffold(
             topBar = { TopBar(scope, scaffoldState, recipe) },
             drawerContent = {
-                DrawerContent(recipes) {
+                DrawerContent(uiRecipes) {
                     recipe = it
                     scope.launch {
                         scaffoldState.drawerState.close()
@@ -152,14 +193,14 @@ fun RecipesUI(recipes: List<Recipe>) {
                     .fillMaxSize()
                     .background(MaterialTheme.colors.background),
             ) {
-                RecipeUI(recipe)
+                RecipeUI(recipe, scope)
             }
         }
     }
 }
 
 @Composable
-fun RecipeUI(recipe: Recipe?) {
+fun RecipeUI(recipe: Recipe?, scope: CoroutineScope) {
     if (recipe == null) {
         Column(
             verticalArrangement = Arrangement.Center,
@@ -173,49 +214,108 @@ fun RecipeUI(recipe: Recipe?) {
         return
     }
 
+    val taskListState = rememberLazyListState()
+
     LazyColumn(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Top,
+        state = taskListState,
     ) {
-        recipe.tasks.map {
-            item { Text(it.description) }
+        item { RecipeSummary(recipe) }
+
+        var first = true
+        itemsIndexed(
+            items = recipe.tasks
+        ) { index, task ->
+            task.active = first
+            first = false
+            task.uiIndex = index
+            TaskCard(task, scope, taskListState)
+        }
+
+        item {
+            Text(text = "Concralluations", style = MaterialTheme.typography.h1)
         }
     }
 }
 
 @Composable
-private fun RecipeList(
-    recipes: List<Recipe>,
-    onItemClick: (recipe: Recipe) -> Unit,
-) {
-    LazyColumn(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Top,
-    ) {
-        recipes.map {
-            item { RecipeItem(it, onItemClick) }
-        }
-    }
-}
-
-@Composable
-private fun RecipeItem(
-    recipe: Recipe,
-    onClick: (it: Recipe) -> Unit,
+fun RecipeCard(
+    background: Color = MaterialTheme.colors.background,
+    content: @Composable () -> Unit,
 ) {
     Card(
-        elevation = 5.dp,
         modifier = Modifier
-            .padding(5.dp)
+            .border(BorderStroke(1.dp, MaterialTheme.colors.secondary))
+            .padding(10.dp)
             .fillMaxWidth()
+            .background(background),
+        content = content,
+    )
+}
+
+@Composable
+fun TaskCard(task: Task, scope: CoroutineScope, taskListState: LazyListState) {
+
+    RecipeCard(
+        // TODO: Not working wtf
+        background = (
+                if (task.active)
+                    MaterialTheme.colors.secondary
+                else if (task.done)
+                    MaterialTheme.colors.surface
+                else
+                    MaterialTheme.colors.background
+                )
     ) {
-        Button(
-            modifier = Modifier
-                .padding(10.dp),
-            onClick = { onClick(recipe) }
-        ) {
-            Text(text = recipe.title, style = MaterialTheme.typography.body1)
+        Column() {
+            Text(text = if (task.active) "active" else "inactive")
+            Text(text = if (task.done) "done" else "todo")
+
+            Text(text = task.description)
+            Button(
+                onClick = {
+                    task.active = false
+                    task.done = true
+                    val lastIndex = taskListState.layoutInfo.totalItemsCount
+                    scope.launch {
+                        if (task.nextTask == null) {
+                            taskListState.scrollToItem(lastIndex)
+                        } else {
+                            task.nextTask.active = true
+                            taskListState.scrollToItem(task.nextTask.uiIndex ?: lastIndex)
+                        }
+                    }
+                },
+                modifier = Modifier.align(Alignment.End)
+            ) {
+                Text("Done")
+            }
         }
+    }
+}
+
+@Composable
+fun RecipeSummary(recipe: Recipe) {
+    RecipeCard {
+        Column(
+            horizontalAlignment = Alignment.Start
+        ) {
+            Text(text = recipe.title, style = MaterialTheme.typography.h1)
+            Text(text = "Feeds ${recipe.persons}",
+                 style = MaterialTheme.typography.caption)
+            Spacer(modifier = Modifier.height(10.dp))
+            Text(text = recipe.description, style = MaterialTheme.typography.body1)
+        }
+    }
+}
+
+
+@Preview(showBackground = true)
+@Composable
+fun RecipePreview() {
+    RecipesTheme(darkTheme = true) {
+        RecipesUI(DataSource.recipes, DataSource.recipes[0])
     }
 }
 

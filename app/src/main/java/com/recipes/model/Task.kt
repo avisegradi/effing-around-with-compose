@@ -6,5 +6,8 @@ class Task(
     val description: String,
     val ingredients: Array<Ingredient> = emptyArray(),
     val nextTask: Task? = null, // When null, go to next in array
+    var active: Boolean = false,
+    var done: Boolean = false,
+    var uiIndex: Int? = null,
 )
 
