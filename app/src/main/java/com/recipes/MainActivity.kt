@@ -56,7 +56,7 @@ private fun DrawerContent(
                 modifier = Modifier.padding(5.dp)
             )
             Divider(thickness = 2.dp, color = MaterialTheme.colors.onBackground)
-            RecipeList(recipes, onRecipeClick) /* TODO also hide drawer */
+            RecipeList(recipes, onRecipeClick)
         }
     }
 }
@@ -67,7 +67,7 @@ private fun TopBar(
     scaffoldState: ScaffoldState,
     recipe: Recipe?,
 ) {
-    TopAppBar() {
+    TopAppBar {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -134,7 +134,14 @@ fun RecipesUI(recipes: List<Recipe>) {
 
         Scaffold(
             topBar = { TopBar(scope, scaffoldState, recipe) },
-            drawerContent = { DrawerContent(recipes) { recipe = it } },
+            drawerContent = {
+                DrawerContent(recipes) {
+                    recipe = it
+                    scope.launch {
+                        scaffoldState.drawerState.close()
+                    }
+                }
+            },
             bottomBar = { BottomNavigation(scope, lazyListState) },
             scaffoldState = scaffoldState,
         ) {
