@@ -3,15 +3,14 @@ package com.recipes
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
@@ -38,7 +37,8 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             RecipesTheme {
-                RecipesUI(DataSource.recipes)
+                val recipes by remember { mutableStateOf(DataSource().recipes) }
+                RecipesUI(recipes)
             }
         }
     }
@@ -207,8 +207,6 @@ fun RecipeUI(recipe: Recipe?, scope: CoroutineScope) {
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier.fillMaxSize(),
         ) {
-
-
             Text("No recipe selected", style = MaterialTheme.typography.h2)
         }
         return
@@ -216,21 +214,38 @@ fun RecipeUI(recipe: Recipe?, scope: CoroutineScope) {
 
     val taskListState = rememberLazyListState()
 
+    val recipeState by remember { mutableStateOf(recipe) }
+
     LazyColumn(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Top,
         state = taskListState,
     ) {
-        item { RecipeSummary(recipe) }
+        item { RecipeSummary(recipeState) }
 
         var first = true
         itemsIndexed(
-            items = recipe.tasks
+            items = recipeState.tasks
         ) { index, task ->
-            task.active = first
+            var active by remember { mutableStateOf(first) }
+            var done by remember { mutableStateOf(false) }
             first = false
-            task.uiIndex = index
-            TaskCard(task, scope, taskListState)
+            TaskCard(
+                task,
+                active,
+                done,
+            ) {
+                active = false
+                done = true
+                val lastIndex = taskListState.layoutInfo.totalItemsCount
+                scope.launch {
+                    if (task.nextTask == null) {
+                        taskListState.scrollToItem(lastIndex)
+                    } else {
+                        taskListState.scrollToItem(index + 1)
+                    }
+                }
+            }
         }
 
         item {
@@ -246,47 +261,43 @@ fun RecipeCard(
 ) {
     Card(
         modifier = Modifier
-            .border(BorderStroke(1.dp, MaterialTheme.colors.secondary))
-            .padding(10.dp)
-            .fillMaxWidth()
-            .background(background),
-        content = content,
-    )
+            .padding(5.dp),
+        shape = RoundedCornerShape(5.dp),
+        elevation = 5.dp,
+    ) {
+        Column(
+            modifier = Modifier
+                .background(background)
+                .padding(10.dp)
+        ) {
+            content()
+        }
+    }
 }
 
 @Composable
-fun TaskCard(task: Task, scope: CoroutineScope, taskListState: LazyListState) {
-
+fun TaskCard(
+    task: Task,
+    active: Boolean,
+    done: Boolean,
+    onClick: () -> Unit,
+) {
     RecipeCard(
-        // TODO: Not working wtf
-        background = (
-                if (task.active)
-                    MaterialTheme.colors.secondary
-                else if (task.done)
-                    MaterialTheme.colors.surface
-                else
-                    MaterialTheme.colors.background
-                )
+        background = when {
+            active -> MaterialTheme.colors.secondary
+            done -> MaterialTheme.colors.surface
+            else -> MaterialTheme.colors.background
+        }
     ) {
-        Column() {
-            Text(text = if (task.active) "active" else "inactive")
-            Text(text = if (task.done) "done" else "todo")
+        Column(
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text(text = if (active) "active" else "inactive")
+            Text(text = if (done) "done" else "todo")
 
             Text(text = task.description)
             Button(
-                onClick = {
-                    task.active = false
-                    task.done = true
-                    val lastIndex = taskListState.layoutInfo.totalItemsCount
-                    scope.launch {
-                        if (task.nextTask == null) {
-                            taskListState.scrollToItem(lastIndex)
-                        } else {
-                            task.nextTask.active = true
-                            taskListState.scrollToItem(task.nextTask.uiIndex ?: lastIndex)
-                        }
-                    }
-                },
+                onClick = onClick,
                 modifier = Modifier.align(Alignment.End)
             ) {
                 Text("Done")
@@ -299,7 +310,8 @@ fun TaskCard(task: Task, scope: CoroutineScope, taskListState: LazyListState) {
 fun RecipeSummary(recipe: Recipe) {
     RecipeCard {
         Column(
-            horizontalAlignment = Alignment.Start
+            horizontalAlignment = Alignment.Start,
+            modifier = Modifier.fillMaxWidth()
         ) {
             Text(text = recipe.title, style = MaterialTheme.typography.h1)
             Text(text = "Feeds ${recipe.persons}",
@@ -310,12 +322,22 @@ fun RecipeSummary(recipe: Recipe) {
     }
 }
 
+@Preview(showBackground = true)
+@Composable
+fun CardPreview() {
+    RecipesTheme(darkTheme = true) {
+        val recipes by remember { mutableStateOf(DataSource().recipes) }
+
+        TaskCard(recipes[0].tasks[0], true, false) {}
+    }
+}
 
 @Preview(showBackground = true)
 @Composable
 fun RecipePreview() {
     RecipesTheme(darkTheme = true) {
-        RecipesUI(DataSource.recipes, DataSource.recipes[0])
+        val recipes by remember { mutableStateOf(DataSource().recipes) }
+        RecipesUI(recipes, recipes[0])
     }
 }
 
@@ -323,7 +345,8 @@ fun RecipePreview() {
 @Composable
 fun DrawerPreview() {
     RecipesTheme(darkTheme = true) {
-        DrawerContent(DataSource.recipes, {})
+        val recipes by remember { mutableStateOf(DataSource().recipes) }
+        DrawerContent(recipes) {}
     }
 }
 
@@ -331,6 +354,7 @@ fun DrawerPreview() {
 @Composable
 fun DefaultPreview() {
     RecipesTheme(darkTheme = true) {
-        RecipesUI(DataSource.recipes)
+        val recipes by remember { mutableStateOf(DataSource().recipes) }
+        RecipesUI(recipes)
     }
 }

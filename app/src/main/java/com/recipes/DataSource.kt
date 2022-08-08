@@ -1,14 +1,14 @@
 package com.recipes
 
-import androidx.compose.runtime.Composable
+import androidx.lifecycle.LiveData
 import com.recipes.model.Ingredient
 import com.recipes.model.MeasUnit
 import com.recipes.model.Recipe
 import com.recipes.model.Task
 
-class DataSource {
-    companion object {
-        val recipes = listOf(
+class DataSource : LiveData<List<Recipe>>() {
+    val recipes =
+        listOf(
             Recipe(
                 "Omelette",
                 "Best omelette ever",
@@ -25,5 +25,4 @@ class DataSource {
                 )
             )
         )
-    }
 }
