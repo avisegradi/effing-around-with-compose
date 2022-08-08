@@ -199,6 +199,11 @@ fun RecipesUI(recipes: List<Recipe>, startingRecipe: Recipe? = null) {
     }
 }
 
+data class TaskState(
+    val active: Boolean = false,
+    val done: Boolean = false,
+)
+
 @Composable
 fun RecipeUI(recipe: Recipe?, scope: CoroutineScope) {
     if (recipe == null) {
@@ -214,36 +219,33 @@ fun RecipeUI(recipe: Recipe?, scope: CoroutineScope) {
 
     val taskListState = rememberLazyListState()
 
-    val recipeState by remember { mutableStateOf(recipe) }
-
     LazyColumn(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Top,
         state = taskListState,
     ) {
-        item { RecipeSummary(recipeState) }
+        item { RecipeSummary(recipe) }
+        val shiftIndex = 1  // Number of heading items
+        val tasks = recipe.tasks
+
+        val lookup = tasks.zip(tasks.indices.map { it + shiftIndex }).toMap()
 
         var first = true
         itemsIndexed(
-            items = recipeState.tasks
+            items = recipe.tasks
         ) { index, task ->
-            var active by remember { mutableStateOf(first) }
-            var done by remember { mutableStateOf(false) }
+            var taskState by remember { mutableStateOf(TaskState(first, false)) }
             first = false
-            TaskCard(
-                task,
-                active,
-                done,
-            ) {
-                active = false
-                done = true
-                val lastIndex = taskListState.layoutInfo.totalItemsCount
+            TaskCard(task, taskState) {
+                taskState = TaskState(active = false, done = true)
+
                 scope.launch {
-                    if (task.nextTask == null) {
-                        taskListState.scrollToItem(lastIndex)
-                    } else {
-                        taskListState.scrollToItem(index + 1)
-                    }
+                    taskListState.scrollToItem(
+                        if (task.nextTask == null)
+                            taskListState.layoutInfo.totalItemsCount
+                        else
+                            lookup[task.nextTask]!!
+                    )
                 }
             }
         }
@@ -278,22 +280,21 @@ fun RecipeCard(
 @Composable
 fun TaskCard(
     task: Task,
-    active: Boolean,
-    done: Boolean,
+    taskState: TaskState,
     onClick: () -> Unit,
 ) {
     RecipeCard(
         background = when {
-            active -> MaterialTheme.colors.secondary
-            done -> MaterialTheme.colors.surface
+            taskState.active -> MaterialTheme.colors.secondary
+            taskState.done -> MaterialTheme.colors.surface
             else -> MaterialTheme.colors.background
         }
     ) {
         Column(
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text(text = if (active) "active" else "inactive")
-            Text(text = if (done) "done" else "todo")
+            Text(text = if (taskState.active) "active" else "inactive")
+            Text(text = if (taskState.done) "done" else "todo")
 
             Text(text = task.description)
             Button(
@@ -328,7 +329,7 @@ fun CardPreview() {
     RecipesTheme(darkTheme = true) {
         val recipes by remember { mutableStateOf(DataSource().recipes) }
 
-        TaskCard(recipes[0].tasks[0], true, false) {}
+        TaskCard(recipes[0].tasks[0], TaskState()) {}
     }
 }
 
