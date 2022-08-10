@@ -24,12 +24,18 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.recipes.model.Ingredient
 import com.recipes.model.Recipe
 import com.recipes.model.Task
 import com.recipes.model.TaskId
 import com.recipes.ui.theme.RecipesTheme
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+
+data class TaskState(
+    val active: Boolean = false,
+    val done: Boolean = false,
+)
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -199,11 +205,6 @@ fun RecipesUI(recipes: List<Recipe>, startingRecipe: Recipe? = null) {
     }
 }
 
-data class TaskState(
-    val active: Boolean = false,
-    val done: Boolean = false,
-)
-
 @Composable
 fun RecipeUI(recipe: Recipe?, scope: CoroutineScope) {
     if (recipe == null) {
@@ -218,12 +219,14 @@ fun RecipeUI(recipe: Recipe?, scope: CoroutineScope) {
     }
 
     val tasks = recipe.tasks
+    //TODO: maybe should be part of Recipe?
     val nextTasks = tasks.mapIndexed { index, task ->
         task.id to when (task.nextTask) {
             null -> if (index < tasks.size - 1) tasks[index + 1].id else null
             else -> task.nextTask
         }
     }.toMap()
+
     val taskListState = rememberLazyListState()
 
     var first = true
@@ -261,7 +264,7 @@ fun RecipeUI(recipe: Recipe?, scope: CoroutineScope) {
                         taskStateLookup[nextItem] = taskStateLookup[nextItem]!!.copy(active = true)
                         indexLookup[nextItem]!!
                     } else {
-                       taskListState.layoutInfo.totalItemsCount - 1
+                        taskListState.layoutInfo.totalItemsCount - 1
                     }
 
                     taskListState.scrollToItem(nextIndex)
@@ -312,18 +315,31 @@ fun TaskCard(
         Column(
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text(text = if (taskState.active) "active" else "inactive")
-            Text(text = if (taskState.done) "done" else "todo")
-
             Text(text = task.description)
-            Button(
-                onClick = onClick,
-                modifier = Modifier.align(Alignment.End)
-            ) {
-                Text("Done")
+            // TODO Ingredients
+            // TODO collapsed when done
+            if (taskState.done) {
+
+            } else {
+                Button(
+                    onClick = onClick,
+                    modifier = Modifier.align(Alignment.End)
+                ) {
+                    Text("Done")
+                }
             }
         }
     }
+}
+
+@Composable
+fun IngredientList(ingredients: List<Ingredient>) {
+    // TODO
+}
+
+@Composable
+fun Ingredient(ingredient: Ingredient) {
+    // TODO
 }
 
 @Composable
@@ -338,6 +354,10 @@ fun RecipeSummary(recipe: Recipe) {
                  style = MaterialTheme.typography.caption)
             Spacer(modifier = Modifier.height(10.dp))
             Text(text = recipe.description, style = MaterialTheme.typography.body1)
+
+            Button(onClick = { /*TODO*/ }) {
+                Text(text = "Restart")
+            }
         }
     }
 }

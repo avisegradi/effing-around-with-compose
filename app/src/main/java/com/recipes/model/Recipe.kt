@@ -12,7 +12,7 @@ class Recipe(
         require(tasks.hasUniqueIds())
     }
 
-    fun allIngredients() {
+    fun allIngredients(): List<Ingredient> {
         throw NotImplementedError()
     } // placeholder, collect all recursively
 }
