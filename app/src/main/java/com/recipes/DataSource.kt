@@ -17,11 +17,12 @@ class DataSource : LiveData<List<Recipe>>() {
                     Ingredient("butter", 100f, MeasUnit.Gram),
                     Ingredient.pinchOf("salt"),
                 ),
-                tasks = arrayOf(
-                    Task("Whisk eggs with salt, let it sit for 5 minutes."),
-                    Task("Melt the butter in a saucepan, over LOW heat."),
-                    Task("Pour eggs in butter, whisking constantly over LOW heat, for 4 minutes."),
-                    Task("Give up and throw it in the rubbish bin.")
+                tasks = listOf(
+                    Task("whisk", "Whisk eggs with salt, let it sit for 5 minutes."),
+                    Task("melt", "Melt the butter in a saucepan, over LOW heat."),
+                    Task("addEggs",
+                         "Pour eggs in butter, whisking constantly over LOW heat, for 4 minutes."),
+                    Task("done", "Give up and throw it in the rubbish bin.")
                 )
             )
         )

@@ -5,8 +5,14 @@ class Recipe(
     val description: String,
     val ingredients: Array<Ingredient>,
     val persons: Int = 4,
-    val tasks: Array<Task>,
-    val parts: Array<Recipe> = emptyArray(),
+    val tasks: List<Task>,
+    val parts: List<Recipe> = emptyList(),
 ) {
-    fun allIngredients() { throw NotImplementedError() } // placeholder, collect all recursively
+    init {
+        require(tasks.hasUniqueIds())
+    }
+
+    fun allIngredients() {
+        throw NotImplementedError()
+    } // placeholder, collect all recursively
 }
