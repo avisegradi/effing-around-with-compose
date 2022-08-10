@@ -26,6 +26,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.recipes.model.Recipe
 import com.recipes.model.Task
+import com.recipes.model.TaskId
 import com.recipes.ui.theme.RecipesTheme
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -217,7 +218,18 @@ fun RecipeUI(recipe: Recipe?, scope: CoroutineScope) {
         return
     }
 
+    val tasks = recipe.tasks
     val taskListState = rememberLazyListState()
+    var first = true
+    val taskStateLookup by remember {
+        mutableStateOf(
+            tasks.associateTo(mutableMapOf()) {
+                val active = first
+                first = false
+                it.id to TaskState(active, false)
+            }
+        )
+    }
 
     LazyColumn(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -225,27 +237,32 @@ fun RecipeUI(recipe: Recipe?, scope: CoroutineScope) {
         state = taskListState,
     ) {
         item { RecipeSummary(recipe) }
-        val shiftIndex = 1  // Number of heading items
-        val tasks = recipe.tasks
 
-        val lookup = tasks.zip(tasks.indices.map { it + shiftIndex }).toMap()
+        val indexLookup = mutableMapOf<TaskId, Int>()
 
-        var first = true
         itemsIndexed(
             items = recipe.tasks
         ) { index, task ->
-            var taskState by remember { mutableStateOf(TaskState(first, false)) }
-            first = false
-            TaskCard(task, taskState) {
-                taskState = TaskState(active = false, done = true)
+            val id = task.id
+            val taskState = taskStateLookup[id]!!
+            indexLookup[id] = index
 
+            TaskCard(task, taskState) {
                 scope.launch {
-                    taskListState.scrollToItem(
-                        if (task.nextTask == null)
-                            taskListState.layoutInfo.totalItemsCount
+                    val nextItem = task.nextTask
+                    taskStateLookup[id] = TaskState(false, true)
+                    val nextIndex = if (nextItem != null) {
+                        taskStateLookup[nextItem] = taskStateLookup[nextItem]!!.copy(active = true)
+                        indexLookup[nextItem]!!
+                    } else {
+                        val lastIndex = taskListState.layoutInfo.totalItemsCount - 1
+                        if (index < lastIndex)
+                            index + 1
                         else
-                            lookup[task.nextTask]!!
-                    )
+                            lastIndex
+                    }
+
+                    taskListState.scrollToItem(nextIndex)
                 }
             }
         }
