@@ -31,7 +31,6 @@ import com.recipes.ui.theme.RecipesTheme
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
-
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -219,15 +218,22 @@ fun RecipeUI(recipe: Recipe?, scope: CoroutineScope) {
     }
 
     val tasks = recipe.tasks
+    val nextTasks = tasks.mapIndexed { index, task ->
+        task.id to when (task.nextTask) {
+            null -> if (index < tasks.size - 1) tasks[index + 1].id else null
+            else -> task.nextTask
+        }
+    }.toMap()
     val taskListState = rememberLazyListState()
+
     var first = true
-    val taskStateLookup by remember {
-        mutableStateOf(
-            tasks.associateTo(mutableMapOf()) {
+    val taskStateLookup = remember {
+        mutableStateMapOf(
+            *tasks.map {
                 val active = first
                 first = false
                 it.id to TaskState(active, false)
-            }
+            }.toTypedArray()
         )
     }
 
@@ -249,17 +255,13 @@ fun RecipeUI(recipe: Recipe?, scope: CoroutineScope) {
 
             TaskCard(task, taskState) {
                 scope.launch {
-                    val nextItem = task.nextTask
+                    val nextItem = nextTasks[task.id]
                     taskStateLookup[id] = TaskState(false, true)
                     val nextIndex = if (nextItem != null) {
                         taskStateLookup[nextItem] = taskStateLookup[nextItem]!!.copy(active = true)
                         indexLookup[nextItem]!!
                     } else {
-                        val lastIndex = taskListState.layoutInfo.totalItemsCount - 1
-                        if (index < lastIndex)
-                            index + 1
-                        else
-                            lastIndex
+                       taskListState.layoutInfo.totalItemsCount - 1
                     }
 
                     taskListState.scrollToItem(nextIndex)
