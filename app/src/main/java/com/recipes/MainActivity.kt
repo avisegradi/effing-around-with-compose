@@ -329,7 +329,6 @@ fun TaskCard(
         ) {
             Text(text = task.description)
             // TODO Ingredients
-            // TODO collapsed when done
             AnimatedVisibility(visible = !taskState.done) {
                 IngredientList(task.ingredients)
                 Row {
@@ -347,12 +346,14 @@ fun TaskCard(
 
 @Composable
 fun IngredientList(ingredients: List<Ingredient>) {
-    // TODO
+    Column {
+        ingredients.map { Ingredient(it) }
+    }
 }
 
 @Composable
 fun Ingredient(ingredient: Ingredient) {
-    // TODO
+    Text(text = ingredient.name)
 }
 
 @Composable
@@ -367,6 +368,7 @@ fun RecipeSummary(recipe: Recipe, onReset: () -> Unit) {
                  style = MaterialTheme.typography.caption)
             Spacer(modifier = Modifier.height(10.dp))
             Text(text = recipe.description, style = MaterialTheme.typography.body1)
+            IngredientList(ingredients = recipe.allIngredients())
 
             Button(onClick = onReset) {
                 Text(text = "Restart")

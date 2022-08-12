@@ -1,11 +1,13 @@
 package com.recipes.model
 
+import androidx.core.graphics.PathUtils.flatten
+
 class Recipe(
     val title: String,
     val description: String,
-    val ingredients: Array<Ingredient>,
-    val persons: Int = 4,
     val tasks: List<Task>,
+    val ingredients: List<Ingredient> = listOf(),
+    val persons: Int = 4,
     val parts: List<Recipe> = emptyList(),
 ) {
     init {
@@ -13,6 +15,6 @@ class Recipe(
     }
 
     fun allIngredients(): List<Ingredient> {
-        throw NotImplementedError()
-    } // placeholder, collect all recursively
+        return tasks.flatMap { it.ingredients }
+    }
 }
