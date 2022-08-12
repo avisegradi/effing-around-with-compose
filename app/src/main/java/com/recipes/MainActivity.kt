@@ -1,8 +1,6 @@
 package com.recipes
 
 import android.os.Bundle
-import android.widget.ExpandableListView
-import android.widget.Space
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.animation.AnimatedVisibility
@@ -25,16 +23,13 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.modifier.modifierLocalConsumer
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.recipes.model.Ingredient
-import com.recipes.model.Recipe
-import com.recipes.model.Task
-import com.recipes.model.TaskId
+import com.recipes.model.*
 import com.recipes.ui.theme.RecipesTheme
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -358,7 +353,19 @@ fun IngredientList(ingredients: List<Ingredient>) {
 
 @Composable
 fun Ingredient(ingredient: Ingredient) {
-    Text(text = ingredient.name)
+    val unit = ingredient.unit
+    Row {
+        Text(
+            text = ingredient.amount.asAmountString(),
+            textAlign = TextAlign.End,
+            modifier = Modifier.weight(.5f)
+        )
+        Spacer(modifier = Modifier.width(10.dp))
+        Text(
+            text = (if (unit == MeasUnit.Custom) ingredient.customUnit else unit.name).toString(),
+            modifier = Modifier.weight(.5f))
+        Text(text = ingredient.name, modifier = Modifier.weight(1f))
+    }
 }
 
 @Composable

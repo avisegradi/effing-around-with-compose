@@ -2,6 +2,10 @@ package com.recipes.model
 
 typealias Amount = Float
 
+fun Amount.asAmountString(): String {
+    return this.toInt().toString()
+}
+
 enum class MeasUnit {
     Pieces,
     Teaspoon,
