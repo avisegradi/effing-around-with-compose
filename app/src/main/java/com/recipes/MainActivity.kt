@@ -8,7 +8,6 @@ import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -330,13 +329,15 @@ fun TaskCard(
             Text(text = task.description)
             // TODO Ingredients
             AnimatedVisibility(visible = !taskState.done) {
-                IngredientList(task.ingredients)
-                Row {
-                    Spacer(Modifier.weight(1f))
-                    Button(
-                        onClick = onClick,
-                    ) {
-                        Text("Done")
+                Column {
+                    IngredientList(task.ingredients)
+                    Row {
+                        Spacer(Modifier.weight(1f))
+                        Button(
+                            onClick = onClick,
+                        ) {
+                            Text("Done")
+                        }
                     }
                 }
             }
@@ -347,7 +348,10 @@ fun TaskCard(
 @Composable
 fun IngredientList(ingredients: List<Ingredient>) {
     Column {
-        ingredients.map { Ingredient(it) }
+        ingredients.map {
+            Ingredient(it)
+            Divider(color = MaterialTheme.colors.onBackground, thickness = 1.dp)
+        }
     }
 }
 
@@ -364,7 +368,11 @@ fun Ingredient(ingredient: Ingredient) {
         Text(
             text = (if (unit == MeasUnit.Custom) ingredient.customUnit else unit.name).toString(),
             modifier = Modifier.weight(.5f))
-        Text(text = ingredient.name, modifier = Modifier.weight(1f))
+        Column(modifier = Modifier.weight(1f)) {
+            Text(text = ingredient.name)
+            if (ingredient.description != null)
+                Text(text = ingredient.description, style = MaterialTheme.typography.caption)
+        }
     }
 }
 
@@ -399,8 +407,6 @@ private fun RecipeIngredients(recipe: Recipe) {
             .animateContentSize()
             .fillMaxWidth()
             .padding(5.dp)
-            .border(1.dp, color = MaterialTheme.colors.primaryVariant)
-            .padding(5.dp)
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
@@ -409,6 +415,7 @@ private fun RecipeIngredients(recipe: Recipe) {
         ) {
             Text(text = "Ingredients", style = MaterialTheme.typography.caption)
             Spacer(modifier = Modifier.width(5.dp))
+            // TODO aggregated Ingredients _OR_ separately; i.e. what to prepare _OR_ in how many bowls
             Icon(
                 if (ingredientsVisible) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore,
                 if (ingredientsVisible) "Hide Ingredients" else "Show Ingredients",

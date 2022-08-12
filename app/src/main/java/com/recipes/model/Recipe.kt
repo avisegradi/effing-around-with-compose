@@ -15,6 +15,6 @@ class Recipe(
     }
 
     fun allIngredients(): List<Ingredient> {
-        return tasks.flatMap { it.ingredients }
+        return tasks.flatMap { it.ingredients }.sortedBy { it.name }
     }
 }

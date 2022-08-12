@@ -21,14 +21,20 @@ class DataSource : LiveData<List<Recipe>>() {
                             Ingredient.pinchOf("salt"),
                         )
                     ),
-                    Task("melt",
-                         "Melt the butter in a saucepan, over LOW heat.",
-                         ingredients = listOf(
-                             Ingredient("butter", 100f, MeasUnit.Gram),
-
-                             )),
-                    Task("addEggs",
-                         "Pour eggs in butter, whisking constantly over LOW heat, for 4 minutes."),
+                    Task(
+                        "melt",
+                        "Melt the butter in a saucepan, over LOW heat.",
+                        ingredients = listOf(
+                            Ingredient("butter", 100f, MeasUnit.Gram),
+                        )
+                    ),
+                    Task(
+                        "addEggs",
+                        "Pour eggs in butter, whisking constantly over LOW heat, for 4 minutes.",
+                        ingredients = listOf(
+                            Ingredient("egg", 1f, MeasUnit.Pieces, description = "for testing"),
+                        )
+                    ),
                     Task("done", "Give up and throw it in the rubbish bin.")
                 )
             ),
