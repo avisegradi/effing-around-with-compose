@@ -3,6 +3,10 @@ package com.recipes
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -305,27 +309,30 @@ fun TaskCard(
     taskState: TaskState,
     onClick: () -> Unit,
 ) {
+    val cardBackgroundColor by animateColorAsState(targetValue = when {
+        taskState.active -> MaterialTheme.colors.secondary
+        taskState.done -> MaterialTheme.colors.surface
+        else -> MaterialTheme.colors.background
+    })
     RecipeCard(
-        background = when {
-            taskState.active -> MaterialTheme.colors.secondary
-            taskState.done -> MaterialTheme.colors.surface
-            else -> MaterialTheme.colors.background
-        }
+        background = cardBackgroundColor
     ) {
         Column(
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier
+                .fillMaxWidth()
         ) {
             Text(text = task.description)
             // TODO Ingredients
             // TODO collapsed when done
-            if (taskState.done) {
-
-            } else {
-                Button(
-                    onClick = onClick,
-                    modifier = Modifier.align(Alignment.End)
-                ) {
-                    Text("Done")
+            AnimatedVisibility(visible = !taskState.done) {
+                IngredientList(task.ingredients)
+                Row {
+                    Spacer(Modifier.weight(1f))
+                    Button(
+                        onClick = onClick,
+                    ) {
+                        Text("Done")
+                    }
                 }
             }
         }
