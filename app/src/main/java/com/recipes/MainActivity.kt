@@ -1,12 +1,17 @@
 package com.recipes
 
 import android.os.Bundle
+import android.widget.ExpandableListView
+import android.widget.Space
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
@@ -15,13 +20,13 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.modifier.modifierLocalConsumer
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
@@ -368,10 +373,48 @@ fun RecipeSummary(recipe: Recipe, onReset: () -> Unit) {
                  style = MaterialTheme.typography.caption)
             Spacer(modifier = Modifier.height(10.dp))
             Text(text = recipe.description, style = MaterialTheme.typography.body1)
-            IngredientList(ingredients = recipe.allIngredients())
+            Spacer(modifier = Modifier.height(10.dp))
+            RecipeIngredients(recipe)
 
             Button(onClick = onReset) {
                 Text(text = "Restart")
+            }
+        }
+    }
+}
+
+@Composable
+private fun RecipeIngredients(recipe: Recipe) {
+    var ingredientsVisible by remember { mutableStateOf(true) }
+
+    Column(
+        modifier = Modifier
+            .animateContentSize()
+            .fillMaxWidth()
+            .padding(5.dp)
+            .border(1.dp, color = MaterialTheme.colors.primaryVariant)
+            .padding(5.dp)
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .clickable { ingredientsVisible = !ingredientsVisible }
+        ) {
+            Text(text = "Ingredients", style = MaterialTheme.typography.caption)
+            Spacer(modifier = Modifier.width(5.dp))
+            Icon(
+                if (ingredientsVisible) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore,
+                if (ingredientsVisible) "Hide Ingredients" else "Show Ingredients",
+                modifier = Modifier.height(with(LocalDensity.current) {
+                    MaterialTheme.typography.caption.fontSize.toDp()
+                })
+            )
+            Spacer(modifier = Modifier.width(5.dp))
+        }
+        AnimatedVisibility(visible = ingredientsVisible) {
+            Row {
+                Spacer(modifier = Modifier.width(20.dp))
+                IngredientList(ingredients = recipe.allIngredients())
             }
         }
     }
