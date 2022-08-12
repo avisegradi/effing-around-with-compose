@@ -5,8 +5,6 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.animateContentSize
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -223,24 +221,25 @@ fun RecipeUI(recipe: Recipe?, scope: CoroutineScope) {
     }
 
     val tasks = recipe.tasks
-    //TODO: maybe should be part of Recipe?
-    val nextTasks = tasks.mapIndexed { index, task ->
-        task.id to when (task.nextTask) {
-            null -> if (index < tasks.size - 1) tasks[index + 1].id else null
-            else -> task.nextTask
-        }
-    }.toMap()
+
+    val nextTasks = remember {
+        tasks.mapIndexed { index, task ->
+            task.id to when (task.nextTask) {
+                null -> if (index < tasks.size - 1) tasks[index + 1].id else null
+                else -> task.nextTask
+            }
+        }.toMap()
+    }
 
     val taskListState = rememberLazyListState()
 
-    var first = true
+    val defaultTaskState = { index: Int, task: Task ->
+        task.id to TaskState(index == 0, false)
+    }
+
     val taskStateLookup = remember {
         mutableStateMapOf(
-            *tasks.map {
-                val active = first
-                first = false
-                it.id to TaskState(active, false)
-            }.toTypedArray()
+            *tasks.mapIndexed(defaultTaskState).toTypedArray()
         )
     }
 
@@ -249,7 +248,13 @@ fun RecipeUI(recipe: Recipe?, scope: CoroutineScope) {
         verticalArrangement = Arrangement.Top,
         state = taskListState,
     ) {
-        item { RecipeSummary(recipe) }
+        item {
+            RecipeSummary(recipe) {
+                tasks.mapIndexed(defaultTaskState).forEach {
+                    taskStateLookup[it.first] = it.second
+                }
+            }
+        }
 
         val indexLookup = mutableMapOf<TaskId, Int>()
 
@@ -265,7 +270,8 @@ fun RecipeUI(recipe: Recipe?, scope: CoroutineScope) {
                     val nextItem = nextTasks[task.id]
                     taskStateLookup[id] = TaskState(false, true)
                     val nextIndex = if (nextItem != null) {
-                        taskStateLookup[nextItem] = taskStateLookup[nextItem]!!.copy(active = true)
+                        taskStateLookup[nextItem] =
+                            taskStateLookup[nextItem]!!.copy(active = true)
                         indexLookup[nextItem]!!
                     } else {
                         taskListState.layoutInfo.totalItemsCount - 1
@@ -350,7 +356,7 @@ fun Ingredient(ingredient: Ingredient) {
 }
 
 @Composable
-fun RecipeSummary(recipe: Recipe) {
+fun RecipeSummary(recipe: Recipe, onReset: () -> Unit) {
     RecipeCard {
         Column(
             horizontalAlignment = Alignment.Start,
@@ -362,7 +368,7 @@ fun RecipeSummary(recipe: Recipe) {
             Spacer(modifier = Modifier.height(10.dp))
             Text(text = recipe.description, style = MaterialTheme.typography.body1)
 
-            Button(onClick = { /*TODO*/ }) {
+            Button(onClick = onReset) {
                 Text(text = "Restart")
             }
         }
