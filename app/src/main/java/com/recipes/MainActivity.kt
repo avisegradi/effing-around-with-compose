@@ -33,7 +33,6 @@ import com.recipes.ui.theme.RecipesTheme
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlin.math.max
 import kotlin.math.min
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
@@ -41,7 +40,9 @@ import kotlin.time.ExperimentalTime
 import kotlin.time.TimeMark
 import kotlin.time.TimeSource
 
+
 data class TaskState(
+    val index: Int,
     val active: Boolean = false,
     val done: Boolean = false,
 )
@@ -241,7 +242,11 @@ fun RecipeUI(recipe: Recipe?, scope: CoroutineScope) {
     val taskListState = rememberLazyListState()
 
     val defaultTaskState = { index: Int, task: Task ->
-        task.id to TaskState(index == 0, false)
+        task.id to TaskState(
+            index = index,
+            active = index == 0,
+            done = false,
+        )
     }
 
     val taskStateLookup = remember {
@@ -271,11 +276,14 @@ fun RecipeUI(recipe: Recipe?, scope: CoroutineScope) {
             val id = task.id
             val taskState = taskStateLookup[id]!!
             indexLookup[id] = index
+            val timerState by remember { mutableStateOf(TimerState.fromTask(task)) }
 
-            TaskCard(task, taskState) {
+            TaskCard(task, taskState, timerState) {
                 scope.launch {
+                    timerState?.reset()
+
                     val nextItem = nextTasks[task.id]
-                    taskStateLookup[id] = TaskState(false, true)
+                    taskStateLookup[id] = taskState.copy(active = false, done = true)
                     val nextIndex = if (nextItem != null) {
                         taskStateLookup[nextItem] =
                             taskStateLookup[nextItem]!!.copy(active = true)
@@ -317,10 +325,54 @@ fun RecipeCard(
 }
 
 @OptIn(ExperimentalTime::class)
+data class TimerState constructor(
+    val startingDuration: Duration,
+    var startedAt: TimeMark? = null,
+) {
+    data class TimerSnapshot(
+        val remaining: Duration,
+        val elapsed: Duration,
+        val progress: Float,
+    ) {
+        val remainingWholeSeconds: Duration
+            get() = remaining.inWholeSeconds.seconds
+
+        val isDone: Boolean
+            get() = progress == 1.0f
+    }
+
+    fun start() {
+        startedAt = TimeSource.Monotonic.markNow()
+    }
+
+    fun reset() {
+        startedAt = null
+    }
+
+    val isRunning: Boolean
+        get() = startedAt != null
+
+    val snapshot: TimerSnapshot
+        get() = startedAt?.let {
+            it.elapsedNow().let { elapsed ->
+                TimerSnapshot(
+                    startingDuration - elapsed,
+                    elapsed,
+                    min(elapsed / startingDuration, 1.0).toFloat(),
+                )
+            }
+        } ?: TimerSnapshot(startingDuration, 0.seconds, 0f)
+
+    companion object {
+        fun fromTask(task: Task) = task.timer?.let { TimerState(startingDuration = it) }
+    }
+}
+
 @Composable
 fun TaskCard(
     task: Task,
     taskState: TaskState,
+    timerState: TimerState?,
     onClick: () -> Unit,
 ) {
     val cardBackgroundColor by animateColorAsState(targetValue = when {
@@ -340,55 +392,16 @@ fun TaskCard(
                 Column {
                     IngredientList(task.ingredients)
 
-                    var timerVisible by remember { mutableStateOf(task.timer != null) }
-                    var timerStarted: TimeMark? by remember { mutableStateOf(null) }
-                    var remaining: Duration? by remember { mutableStateOf(task.timer) }
-                    var elapsed: Duration? by remember { mutableStateOf(null) }
-                    var progress: Float? by remember { mutableStateOf(null) }
-
                     Row {
                         Spacer(Modifier.weight(1f))
-
-                        if (task.timer != null) {
-                            LaunchedEffect(timerStarted) {
-                                if (timerStarted != null) {
-                                    timerVisible = true
-                                    do {
-                                        elapsed = timerStarted!!.elapsedNow()
-                                        remaining = task.timer - elapsed!!
-                                        progress = min(elapsed!! / task.timer, 1.0).toFloat()
-                                        delay(500)
-                                    } while (progress!! < 1f)
-                                    timerVisible = false
-                                }
-                            }
+                        timerState?.let {
+                            TimerButton(it)
+                            Spacer(modifier = Modifier.width(8.dp))
                         }
-
-                        AnimatedVisibility(visible = timerVisible) {
-                            Button(onClick = {
-                                timerStarted = TimeSource.Monotonic.markNow()
-                            }) {
-                                Column(
-                                    modifier = Modifier.width(100.dp)
-                                ) {
-                                    Text("Wait ${remaining!!.inWholeSeconds.seconds.toString()}")
-                                    AnimatedVisibility(visible = progress != null) {
-                                        Column() {
-                                            Spacer(modifier = Modifier.height(5.dp))
-                                            LinearProgressIndicator(
-                                                progress = progress!!,
-                                                color = MaterialTheme.colors.onSurface,
-                                                modifier = Modifier.height(1.dp)
-                                            )
-                                        }
-                                    }
-                                }
+                        Button(onClick = onClick) {
+                            Column() {
+                                Text("Done")
                             }
-                            Spacer(modifier = Modifier.width(5.dp))
-                        }
-
-                        AnimatedVisibility(visible = !timerVisible) {
-                            Button(onClick = onClick) { Text("Done") }
                         }
                     }
                 }
@@ -397,6 +410,44 @@ fun TaskCard(
     }
 }
 
+@OptIn(ExperimentalTime::class)
+@Composable
+fun TimerButton(timerState: TimerState) {
+    var timerSnapshot by remember { mutableStateOf(timerState.snapshot) }
+
+    LaunchedEffect(timerState.startedAt) {
+        when (timerState.startedAt) {
+            null ->
+                do {
+                    timerSnapshot = timerState.snapshot
+                    delay(500)
+                } while (!timerSnapshot.isDone)
+            else ->
+                timerState.reset()
+        }
+    }
+
+    Button(onClick = { timerState.start() }) {
+        Column(
+            modifier = Modifier.width(100.dp)
+        ) {
+            Text("Wait ${timerSnapshot.remainingWholeSeconds.toString()}")
+            Spacer(modifier = Modifier.height(5.dp))
+            AnimatedVisibility(visible = timerState.isRunning) {
+                Column() {
+                    LinearProgressIndicator(
+                        progress = timerSnapshot.progress,
+                        color = MaterialTheme.colors.onSurface,
+                        modifier = Modifier.height(1.dp)
+                    )
+                }
+            }
+            AnimatedVisibility(visible = !timerState.isRunning) {
+                Spacer(modifier = Modifier.height(1.dp))
+            }
+        }
+    }
+}
 
 @Composable
 fun IngredientList(ingredients: List<Ingredient>) {
@@ -489,20 +540,21 @@ private fun RecipeIngredients(recipe: Recipe) {
 
 @Preview(showBackground = true)
 @Composable
-fun CardPreview() {
+fun RecipePreview() {
     RecipesTheme(darkTheme = true) {
         val recipes by remember { mutableStateOf(DataSource().recipes) }
-
-        TaskCard(recipes[0].tasks[0], TaskState()) {}
+        RecipesUI(recipes, recipes[0])
     }
 }
 
 @Preview(showBackground = true)
 @Composable
-fun RecipePreview() {
+fun CardPreview() {
     RecipesTheme(darkTheme = true) {
         val recipes by remember { mutableStateOf(DataSource().recipes) }
-        RecipesUI(recipes, recipes[0])
+        val timerState by remember { mutableStateOf(TimerState.fromTask(recipes[0].tasks[0])) }
+
+        TaskCard(recipes[0].tasks[2], TaskState(0), timerState) {}
     }
 }
 

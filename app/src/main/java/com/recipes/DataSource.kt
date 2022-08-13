@@ -5,7 +5,6 @@ import com.recipes.model.Ingredient
 import com.recipes.model.MeasUnit
 import com.recipes.model.Recipe
 import com.recipes.model.Task
-import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
 class DataSource : LiveData<List<Recipe>>() {
@@ -14,6 +13,8 @@ class DataSource : LiveData<List<Recipe>>() {
             Recipe(
                 "Omelette",
                 "Best omelette ever",
+                // TODO: "active" should be a property, starting items would be true; instead of
+                //  nextTask we'd have enableTask_s_
                 tasks = listOf(
                     Task(
                         "whisk",
@@ -36,7 +37,7 @@ class DataSource : LiveData<List<Recipe>>() {
                         ingredients = listOf(
                             Ingredient("egg", 1f, MeasUnit.Pieces, description = "for testing"),
                         ),
-                        timer = 4.seconds,
+                        timer = 3.seconds,
                     ),
                     Task("done", "Give up and throw it in the rubbish bin.")
                 )
