@@ -31,8 +31,10 @@ import androidx.compose.ui.unit.dp
 import com.recipes.model.*
 import com.recipes.ui.theme.RecipesTheme
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.math.max
+import kotlin.math.min
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
@@ -338,36 +340,49 @@ fun TaskCard(
                 Column {
                     IngredientList(task.ingredients)
 
+                    var timerVisible by remember { mutableStateOf(task.timer != null) }
                     var timerStarted: TimeMark? by remember { mutableStateOf(null) }
-                    var remaining: Duration? by remember { mutableStateOf(null) }
+                    var remaining: Duration? by remember { mutableStateOf(task.timer) }
+                    var elapsed: Duration? by remember { mutableStateOf(null) }
+                    var progress: Float? by remember { mutableStateOf(null) }
 
                     Row {
                         Spacer(Modifier.weight(1f))
 
-                        val (timerVisible, elapsed) = if (task.timer == null)
-                            Pair(false, null)
-                        else {
-                            val elapsed = if (timerStarted != null)
-                                timerStarted!!.elapsedNow()
-                            else
-                                0.seconds
-
-                            remaining = task.timer - elapsed
-                            Pair(remaining!! > 0.seconds, elapsed)
+                        if (task.timer != null) {
+                            LaunchedEffect(timerStarted) {
+                                if (timerStarted != null) {
+                                    timerVisible = true
+                                    do {
+                                        elapsed = timerStarted!!.elapsedNow()
+                                        remaining = task.timer - elapsed!!
+                                        progress = min(elapsed!! / task.timer, 1.0).toFloat()
+                                        delay(500)
+                                    } while (progress!! < 1f)
+                                    timerVisible = false
+                                }
+                            }
                         }
 
                         AnimatedVisibility(visible = timerVisible) {
-                            val pc =
-                                if (timerStarted != null)
-                                    max(timerStarted!!.elapsedNow() / task.timer!!,
-                                        1.0)
-                                else null
-
-
                             Button(onClick = {
                                 timerStarted = TimeSource.Monotonic.markNow()
                             }) {
-                                Text("Wait ${remaining!!.inWholeSeconds.seconds.toString()}")
+                                Column(
+                                    modifier = Modifier.width(100.dp)
+                                ) {
+                                    Text("Wait ${remaining!!.inWholeSeconds.seconds.toString()}")
+                                    AnimatedVisibility(visible = progress != null) {
+                                        Column() {
+                                            Spacer(modifier = Modifier.height(5.dp))
+                                            LinearProgressIndicator(
+                                                progress = progress!!,
+                                                color = MaterialTheme.colors.onSurface,
+                                                modifier = Modifier.height(1.dp)
+                                            )
+                                        }
+                                    }
+                                }
                             }
                             Spacer(modifier = Modifier.width(5.dp))
                         }
