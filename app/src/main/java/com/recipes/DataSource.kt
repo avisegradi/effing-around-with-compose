@@ -5,6 +5,8 @@ import com.recipes.model.Ingredient
 import com.recipes.model.MeasUnit
 import com.recipes.model.Recipe
 import com.recipes.model.Task
+import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.seconds
 
 class DataSource : LiveData<List<Recipe>>() {
     val recipes =
@@ -33,7 +35,8 @@ class DataSource : LiveData<List<Recipe>>() {
                         "Pour eggs in butter, whisking constantly over LOW heat, for 4 minutes.",
                         ingredients = listOf(
                             Ingredient("egg", 1f, MeasUnit.Pieces, description = "for testing"),
-                        )
+                        ),
+                        timer = 4.seconds,
                     ),
                     Task("done", "Give up and throw it in the rubbish bin.")
                 )

@@ -32,6 +32,12 @@ import com.recipes.model.*
 import com.recipes.ui.theme.RecipesTheme
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import kotlin.math.max
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
+import kotlin.time.ExperimentalTime
+import kotlin.time.TimeMark
+import kotlin.time.TimeSource
 
 data class TaskState(
     val active: Boolean = false,
@@ -308,6 +314,7 @@ fun RecipeCard(
     }
 }
 
+@OptIn(ExperimentalTime::class)
 @Composable
 fun TaskCard(
     task: Task,
@@ -327,16 +334,46 @@ fun TaskCard(
                 .fillMaxWidth()
         ) {
             Text(text = task.description)
-            // TODO Ingredients
             AnimatedVisibility(visible = !taskState.done) {
                 Column {
                     IngredientList(task.ingredients)
+
+                    var timerStarted: TimeMark? by remember { mutableStateOf(null) }
+                    var remaining: Duration? by remember { mutableStateOf(null) }
+
                     Row {
                         Spacer(Modifier.weight(1f))
-                        Button(
-                            onClick = onClick,
-                        ) {
-                            Text("Done")
+
+                        val (timerVisible, elapsed) = if (task.timer == null)
+                            Pair(false, null)
+                        else {
+                            val elapsed = if (timerStarted != null)
+                                timerStarted!!.elapsedNow()
+                            else
+                                0.seconds
+
+                            remaining = task.timer - elapsed
+                            Pair(remaining!! > 0.seconds, elapsed)
+                        }
+
+                        AnimatedVisibility(visible = timerVisible) {
+                            val pc =
+                                if (timerStarted != null)
+                                    max(timerStarted!!.elapsedNow() / task.timer!!,
+                                        1.0)
+                                else null
+
+
+                            Button(onClick = {
+                                timerStarted = TimeSource.Monotonic.markNow()
+                            }) {
+                                Text("Wait ${remaining!!.inWholeSeconds.seconds.toString()}")
+                            }
+                            Spacer(modifier = Modifier.width(5.dp))
+                        }
+
+                        AnimatedVisibility(visible = !timerVisible) {
+                            Button(onClick = onClick) { Text("Done") }
                         }
                     }
                 }
@@ -344,6 +381,7 @@ fun TaskCard(
         }
     }
 }
+
 
 @Composable
 fun IngredientList(ingredients: List<Ingredient>) {
