@@ -330,6 +330,7 @@ data class TimerState constructor(
     var startedAt: TimeMark? = null,
 ) {
     data class TimerSnapshot(
+        val isRunning: Boolean,
         val remaining: Duration,
         val elapsed: Duration,
         val progress: Float,
@@ -356,12 +357,13 @@ data class TimerState constructor(
         get() = startedAt?.let {
             it.elapsedNow().let { elapsed ->
                 TimerSnapshot(
+                    true,
                     startingDuration - elapsed,
                     elapsed,
                     min(elapsed / startingDuration, 1.0).toFloat(),
                 )
             }
-        } ?: TimerSnapshot(startingDuration, 0.seconds, 0f)
+        } ?: TimerSnapshot(false, startingDuration, 0.seconds, 0f)
 
     companion object {
         fun fromTask(task: Task) = task.timer?.let { TimerState(startingDuration = it) }
@@ -410,42 +412,57 @@ fun TaskCard(
     }
 }
 
-@OptIn(ExperimentalTime::class)
 @Composable
 fun TimerButton(timerState: TimerState) {
     var timerSnapshot by remember { mutableStateOf(timerState.snapshot) }
+    val scope = rememberCoroutineScope()
 
-    LaunchedEffect(timerState.startedAt) {
-        when (timerState.startedAt) {
-            null ->
+    Button(onClick = {
+        if (timerSnapshot.isDone) {
+            timerState.reset()
+            timerSnapshot = timerState.snapshot
+        } else if (!timerState.isRunning) {
+            timerState.start()
+            timerSnapshot = timerState.snapshot
+
+            scope.launch {
                 do {
-                    timerSnapshot = timerState.snapshot
                     delay(500)
+                    timerSnapshot = timerState.snapshot
                 } while (!timerSnapshot.isDone)
-            else ->
-                timerState.reset()
+            }
+        }
+        /* else TODO Pause?!!!??? */
+    }) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            TimerProgressIndicator(timerSnapshot = timerSnapshot, modifier = Modifier.size(20.dp))
+            Spacer(modifier = Modifier.size(5.dp))
+            Text(
+                when {
+                    timerSnapshot.isDone -> "Restart"
+                    !timerSnapshot.isRunning -> "Start ${timerSnapshot.remainingWholeSeconds.toString()} timer"
+                    else -> "Wait ${timerSnapshot.remainingWholeSeconds.toString()}"
+                }
+                // TODO: Disabled while running
+            )
         }
     }
+}
 
-    Button(onClick = { timerState.start() }) {
-        Column(
-            modifier = Modifier.width(100.dp)
-        ) {
-            Text("Wait ${timerSnapshot.remainingWholeSeconds.toString()}")
-            Spacer(modifier = Modifier.height(5.dp))
-            AnimatedVisibility(visible = timerState.isRunning) {
-                Column() {
-                    LinearProgressIndicator(
-                        progress = timerSnapshot.progress,
-                        color = MaterialTheme.colors.onSurface,
-                        modifier = Modifier.height(1.dp)
-                    )
-                }
-            }
-            AnimatedVisibility(visible = !timerState.isRunning) {
-                Spacer(modifier = Modifier.height(1.dp))
-            }
-        }
+@Composable
+fun TimerProgressIndicator(timerSnapshot: TimerState.TimerSnapshot, modifier: Modifier = Modifier) {
+    AnimatedVisibility(visible = timerSnapshot.isRunning && !timerSnapshot.isDone) {
+        CircularProgressIndicator(
+            progress = timerSnapshot.progress,
+            color = MaterialTheme.colors.onSurface,
+            modifier = modifier,
+        )
+    }
+    AnimatedVisibility(visible = timerSnapshot.isDone) {
+        Icon(Icons.Filled.Check, "Done", modifier = modifier)
+    }
+    AnimatedVisibility(visible = !timerSnapshot.isRunning) {
+        Spacer(modifier = modifier)
     }
 }
 
