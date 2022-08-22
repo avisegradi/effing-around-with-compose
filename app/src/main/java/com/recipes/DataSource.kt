@@ -18,6 +18,7 @@ class DataSource : LiveData<List<Recipe>>() {
                 tasks = listOf(
                     Task(
                         "whisk",
+                        "Whisk eggs",
                         "Whisk eggs with salt, let it sit for 5 minutes.",
                         ingredients = listOf(
                             Ingredient("egg", 8f, MeasUnit.Pieces),
@@ -26,6 +27,7 @@ class DataSource : LiveData<List<Recipe>>() {
                     ),
                     Task(
                         "melt",
+                        "Melt butter",
                         "Melt the butter in a saucepan, over LOW heat.",
                         ingredients = listOf(
                             Ingredient("butter", 100f, MeasUnit.Gram),
@@ -33,23 +35,27 @@ class DataSource : LiveData<List<Recipe>>() {
                     ),
                     Task(
                         "addEggs",
+                        "Cook eggs",
                         "Pour eggs in butter, whisking constantly over LOW heat, for 4 minutes.",
                         ingredients = listOf(
                             Ingredient("egg", 1f, MeasUnit.Pieces, description = "for testing"),
                         ),
-                        timer = 3.seconds,
+                        timer = 30.seconds,
                     ),
-                    Task("done", "Give up and throw it in the rubbish bin.")
+                    Task("done", "Finished", "Give up and throw it in the rubbish bin.")
                 )
             ),
             Recipe(
                 "Nokedli",
                 "Whatever",
                 tasks = listOf(
-                    Task("boil", "Start boiling a ton of water with a bit of salt"),
-                    Task("combine", "Combine all ingredients in a tub"),
-                    Task("cook",
-                         "When the water boils, cook teh stuff; fish out with a spider and add a bit of oil so it won't stick"),
+                    Task("boil", "Boil water", "Start boiling a ton of water with a bit of salt"),
+                    Task("combine", "Combine ingredients", "Combine all ingredients in a tub"),
+                    Task(
+                        "cook",
+                        "Cook stuff",
+                        "When the water boils, cook teh stuff; fish out with a spider and add a bit of oil so it won't stick",
+                    ),
                 ),
                 listOf(
                     Ingredient("egg", 1f, MeasUnit.Pieces),

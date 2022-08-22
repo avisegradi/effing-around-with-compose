@@ -1,5 +1,6 @@
 package com.recipes
 
+import android.content.Context
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -51,12 +52,20 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        appContext = applicationContext
+
+        NotificationHelper(appContext).setupNotificationChannels()
+
         setContent {
             RecipesTheme {
                 val recipes by remember { mutableStateOf(DataSource().recipes) }
                 RecipesUI(recipes)
             }
         }
+    }
+
+    companion object {
+        lateinit var appContext: Context
     }
 }
 
@@ -160,20 +169,28 @@ private fun BottomNavigation(
 ) {
     BottomNavigation {
         BottomNavigationItem(
-            selected = true,
-            onClick = { /* TODO */ },
-            icon = { Icon(Icons.Filled.ArrowBack, "Back") }
+            selected = false,
+            onClick = {
+                scope.launch {
+                    lazyListState.animateScrollToItem(0)
+                }
+            },
+            icon = { Icon(Icons.Filled.VerticalAlignTop, "Back to top") }
         )
         BottomNavigationItem(
             selected = false,
             onClick = {
                 scope.launch {
-                    lazyListState.animateScrollToItem(25, 0)
+                    lazyListState.animateScrollToItem(getActiveComponentIndex())
                 }
             },
-            icon = { Icon(Icons.Filled.Home, "GO HOME") }
+            icon = { Icon(Icons.Filled.SkipNext, "Next step") }
         )
     }
+}
+
+fun getActiveComponentIndex(): Int {
+    throw NotImplementedError()
 }
 
 
@@ -278,7 +295,7 @@ fun RecipeUI(recipe: Recipe?, scope: CoroutineScope) {
             indexLookup[id] = index
             val timerState by remember { mutableStateOf(TimerState.fromTask(task)) }
 
-            TaskCard(task, taskState, timerState) {
+            TaskCard(recipe, task, taskState, timerState) {
                 scope.launch {
                     timerState?.reset()
 
@@ -372,10 +389,11 @@ data class TimerState constructor(
 
 @Composable
 fun TaskCard(
+    recipe: Recipe,
     task: Task,
     taskState: TaskState,
     timerState: TimerState?,
-    onClick: () -> Unit,
+    onDoneClick: () -> Unit,
 ) {
     val cardBackgroundColor by animateColorAsState(targetValue = when {
         taskState.active -> MaterialTheme.colors.secondary
@@ -393,19 +411,7 @@ fun TaskCard(
             AnimatedVisibility(visible = !taskState.done) {
                 Column {
                     IngredientList(task.ingredients)
-
-                    Row {
-                        Spacer(Modifier.weight(1f))
-                        timerState?.let {
-                            TimerButton(it)
-                            Spacer(modifier = Modifier.width(8.dp))
-                        }
-                        Button(onClick = onClick) {
-                            Column() {
-                                Text("Done")
-                            }
-                        }
-                    }
+                    TaskControls(recipe, task, timerState, onDoneClick)
                 }
             }
         }
@@ -413,7 +419,23 @@ fun TaskCard(
 }
 
 @Composable
-fun TimerButton(timerState: TimerState) {
+fun TaskControls(recipe: Recipe, task: Task, timerState: TimerState?, onDoneClick: () -> Unit) {
+    Row {
+        Spacer(Modifier.weight(1f))
+        timerState?.let {
+            TimerButton(recipe, task, it)
+            Spacer(modifier = Modifier.width(8.dp))
+        }
+        Button(onClick = onDoneClick) {
+            Column {
+                Text("Done")
+            }
+        }
+    }
+}
+
+@Composable
+fun TimerButton(recipe: Recipe, task: Task, timerState: TimerState) {
     var timerSnapshot by remember { mutableStateOf(timerState.snapshot) }
     val scope = rememberCoroutineScope()
 
@@ -427,9 +449,14 @@ fun TimerButton(timerState: TimerState) {
 
             scope.launch {
                 do {
+                    NotificationHelper(MainActivity.appContext)
+                        .showNotification(recipe, task, timerState, true)
                     delay(500)
                     timerSnapshot = timerState.snapshot
                 } while (!timerSnapshot.isDone)
+
+                NotificationHelper(MainActivity.appContext).dismissNotification(task)
+                // TODO notification --> Done --> Scrollto
             }
         }
         /* else TODO Pause?!!!??? */
@@ -440,8 +467,8 @@ fun TimerButton(timerState: TimerState) {
             Text(
                 when {
                     timerSnapshot.isDone -> "Restart"
-                    !timerSnapshot.isRunning -> "Start ${timerSnapshot.remainingWholeSeconds.toString()} timer"
-                    else -> "Wait ${timerSnapshot.remainingWholeSeconds.toString()}"
+                    !timerSnapshot.isRunning -> "Start ${timerSnapshot.remainingWholeSeconds} timer"
+                    else -> "Wait ${timerSnapshot.remainingWholeSeconds}"
                 }
                 // TODO: Disabled while running
             )
@@ -571,7 +598,9 @@ fun CardPreview() {
         val recipes by remember { mutableStateOf(DataSource().recipes) }
         val timerState by remember { mutableStateOf(TimerState.fromTask(recipes[0].tasks[0])) }
 
-        TaskCard(recipes[0].tasks[2], TaskState(0), timerState) {}
+        recipes[0].let {
+            TaskCard(it, it.tasks[2], TaskState(0), timerState) {}
+        }
     }
 }
 
