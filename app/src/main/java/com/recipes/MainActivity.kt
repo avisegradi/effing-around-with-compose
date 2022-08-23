@@ -370,6 +370,9 @@ data class TimerState constructor(
     val isRunning: Boolean
         get() = startedAt != null
 
+    //TODO val doneAt: TimeMark?
+    //    get() = startedAt?.let { it + startingDuration }
+
     val snapshot: TimerSnapshot
         get() = startedAt?.let {
             it.elapsedNow().let { elapsed ->

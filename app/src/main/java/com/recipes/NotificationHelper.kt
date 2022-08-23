@@ -1,9 +1,8 @@
 package com.recipes
 
-import android.app.Notification
-import android.app.NotificationChannel
-import android.app.NotificationManager
+import android.app.*
 import android.content.Context
+import android.content.Intent
 import androidx.annotation.WorkerThread
 import androidx.core.app.NotificationCompat
 import androidx.core.content.getSystemService
@@ -49,6 +48,11 @@ class NotificationHelper(private val context: Context) {
         timerState: TimerState,
         update: Boolean = false,
     ) = areNotificationsEnabled guards {
+        val resultIntent = Intent(context, MainActivity::class.java)
+        val resultPendingIntent = TaskStackBuilder.create(context).run {
+            addNextIntentWithParentStack(resultIntent)
+            getPendingIntent(0, PendingIntent.FLAG_IMMUTABLE)
+        }
         val builder = timerState.snapshot.let { snapshot ->
             NotificationCompat.Builder(context, CHANNEL_TIMERS)
                 .setContentTitle("${recipe.title} - ${task.description} -- ${snapshot.remaining}")
@@ -58,6 +62,10 @@ class NotificationHelper(private val context: Context) {
                              snapshot.elapsed.inWholeSeconds.toInt(),
                              false)
                 .setShowWhen(true)
+                .setContentIntent(resultPendingIntent)
+                .setChronometerCountDown(true)
+                .setUsesChronometer(true)
+                // TODO .setWhen(timerState.doneAt?.)
         }
 
         if (update) {
