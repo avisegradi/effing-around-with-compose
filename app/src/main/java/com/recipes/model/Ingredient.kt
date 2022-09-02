@@ -1,8 +1,10 @@
 package com.recipes.model
 
-import java.util.*
-
 typealias Amount = Float
+
+fun Amount.asAmountString(): String {
+    return this.toInt().toString()
+}
 
 enum class MeasUnit {
     Pieces,
@@ -28,6 +30,7 @@ class Ingredient(
     val unit: MeasUnit,
     val description: String? = null,
     val customUnit: String? = null,
+    val optional: Boolean = false,
 ) {
 
     companion object {
