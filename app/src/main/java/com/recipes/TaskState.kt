@@ -4,7 +4,6 @@ import com.recipes.model.Task
 import kotlin.math.min
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
-import kotlin.time.ExperimentalTime
 import kotlin.time.TimeMark
 import kotlin.time.TimeSource
 
@@ -14,7 +13,6 @@ data class TaskState(
     val done: Boolean = false,
 )
 
-@OptIn(ExperimentalTime::class)
 data class TimerState constructor(
     val startingDuration: Duration,
     var startedAt: TimeMark? = null,
